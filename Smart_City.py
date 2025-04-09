@@ -1,5 +1,3 @@
-import socket
-import threading
 import time
 import random
 import json
@@ -32,42 +30,12 @@ def analyze_traffic(data):
         send_command("NORMAL_FLOW", sensor_id)
 
 
-def handle_client(client_socket):
-    with client_socket:
-        data = client_socket.recv(1024)
-        if data:
-            try:
-                traffic_data = json.loads(data.decode())
-                print("Received:", traffic_data)
-                analyze_traffic(traffic_data)
-            except Exception as e:
-                print("Error processing data:", e)
-
-def start_server():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('localhost', 5000))
-    server.listen()
-    print("[Server] Listening on port 5000...")
-    while True:
-        client_sock, _ = server.accept()
-        threading.Thread(target=handle_client, args=(client_sock,), daemon=True).start()
-
-
 def simulate_sensor(sensor_id):
     while True:
         data = TrafficData(sensor_id, random.randint(20, 100))
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.connect(('localhost', 5000))
-                sock.sendall(data.to_json().encode())
-                print(f"[Sensor] Sent: {data.to_json()}")
-        except Exception as e:
-            print("Sensor error:", e)
+        print(f"[Sensor] Sent: {data.to_json()}")
+        analyze_traffic(json.loads(data.to_json()))
         time.sleep(2)
 
-
-
 if __name__ == "__main__":
-    threading.Thread(target=start_server, daemon=True).start()
-    time.sleep(1)  # Let the server start
     simulate_sensor("SENSOR_1")
